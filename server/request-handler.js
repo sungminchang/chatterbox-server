@@ -66,37 +66,76 @@ var requestHandler = function(request, response) {
     }]
   });
 
-  // .writeHead() writes to the request line and headers of the response,
-  // which includes the status and all headers.
-  if (request.method === 'GET') {
-    var data = testData;
-    response.writeHead(200, headers);
-    response.end(JSON.stringify(messages));
-  }
+  console.log(url.parse(request.url));
 
   if (request.method === 'OPTIONS') {
     headers['Allow'] = 'GET, POST, PUT, HEAD, DELETE, OPTIONS';
     response.writeHead(200, headers);
     response.end();
-    // console.log(response._header);
   }
-  // request.method === "POST"
-  if (request.method ==='POST') {
-    var requestBody = ''; //{username: 'ben', text: 'random message'};
-    request.on('data', function(data) {
-      requestBody += data;
-    });
-    request.on('end', function() {
-      var formData = qs.parse(requestBody);
-      response.writeHead(201, headers);
-      console.log(requestBody);
-      messages.results.push(JSON.parse(requestBody));
+
+  if (path === '/classes/messages'){
+    if (request.method === 'GET') {
+      var data = testData;
+      response.writeHead(200, headers);
       response.end(JSON.stringify(messages));
-    });
-    console.log('entered the send branch');
+    } else if (request.method === 'POST') {
+      var requestBody = ''; //{username: 'ben', text: 'random message'};
+      request.on('data', function(data) {
+        requestBody += data;
+      });
+
+      request.on('end', function() {
+        var formData = qs.parse(requestBody);
+        response.writeHead(201, headers);
+        console.log(requestBody);
+        messages.results.push(JSON.parse(requestBody));
+        response.end(JSON.stringify(messages));
+      });
+    }
+    //GET or POST
+  } else if (path === '/classes/room1') {
+    //GET or POST
+
+    // console.log(response._header);
+  } else {
+    response.writeHead(404, headers);
+    response.end();
+    //RETURN 404
   }
 
 
+  // .writeHead() writes to the request line and headers of the response,
+  // // which includes the status and all headers.
+  // if (request.method === 'OPTIONS') {
+  //   headers['Allow'] = 'GET, POST, PUT, HEAD, DELETE, OPTIONS';
+  //   response.writeHead(200, headers);
+  //   response.end();
+  // }
+
+  // if (request.method === 'GET') {
+  //   var data = testData;
+  //   response.writeHead(200, headers);
+  //   response.end(JSON.stringify(messages));
+  // } else if (request.method ==='POST') {
+  //   var requestBody = ''; //{username: 'ben', text: 'random message'};
+  //   request.on('data', function(data) {
+  //     requestBody += data;
+  //   });
+  //   request.on('end', function() {
+  //     var formData = qs.parse(requestBody);
+  //     response.writeHead(201, headers);
+  //     console.log(requestBody);
+  //     messages.results.push(JSON.parse(requestBody));
+  //     response.end(JSON.stringify(messages));
+  //   });
+  //   console.log('entered the send branch');
+  // } else {
+
+  // }
+
+    // console.log(response._header);
+  // request.method === "POST"
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
