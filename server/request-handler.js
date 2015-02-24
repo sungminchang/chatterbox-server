@@ -17,7 +17,7 @@ var qs = require('querystring');
 var messages = {results:[]};
 var data = '';
 
-var requestHandler = function(request, response) {
+exports.requestHandler = function(request, response) {
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -74,9 +74,8 @@ var requestHandler = function(request, response) {
     response.end();
   }
 
-  if (path === '/classes/messages'){
+  if (path === '/classes/messages' || path === '/classes/room1'){
     if (request.method === 'GET') {
-      var data = testData;
       response.writeHead(200, headers);
       response.end(JSON.stringify(messages));
     } else if (request.method === 'POST') {
@@ -94,8 +93,15 @@ var requestHandler = function(request, response) {
       });
     }
     //GET or POST
-  } else if (path === '/classes/room1') {
-    //GET or POST
+  // } else if (path === '/classes/room1') {
+  //   //GET or POST
+  //   if (request.method === 'GET') {
+  //     response.writeHead(200, headers);
+  //     response.end(JSON.stringify(messages));
+  //   } else if (request.method === 'POST') {
+  //     var requestBody = '';
+  //     request.on('data', function(data))
+  //   }
 
     // console.log(response._header);
   } else {
@@ -161,5 +167,3 @@ var defaultCorsHeaders = {
   "access-control-allow-headers": "content-type, accept",
   "access-control-max-age": 10 // Seconds.
 };
-
-module.exports = requestHandler;
