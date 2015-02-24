@@ -172,7 +172,7 @@ $(function() {
         $message.text(data.text).appendTo($chat);
 
         // Add the message to the UI
-        app.$chats.append($chat);
+        app.$chats.prepend($chat);
       }
     },
     addFriend: function(evt) {
@@ -223,7 +223,8 @@ $(function() {
       var message = {
         username: app.username,
         text: app.$message.val(),
-        roomname: app.roomname || 'lobby'
+        roomname: app.roomname || 'lobby',
+        objectId: app.lastMessageId++
       };
 
       app.send(message);
@@ -233,12 +234,12 @@ $(function() {
     },
     startSpinner: function(){
       $('.spinner img').show();
-      $('form input[type=submit]').attr('disabled', "true");
+      // $('form input[type=submit]').attr('disabled', "true");
     },
 
     stopSpinner: function(){
       $('.spinner img').fadeOut('fast');
-      $('form input[type=submit]').attr('disabled', null);
+      // $('form input[type=submit]').attr('disabled', null);
     }
   };
 }());

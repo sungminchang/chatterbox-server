@@ -68,10 +68,10 @@ var requestHandler = function(request, response) {
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
-  if (path === '/classes/messages/fetch') {
+  if (request.method === 'GET') {
     var data = testData;
     response.writeHead(200, headers);
-    response.end(data);
+    response.end(JSON.stringify(messages));
   }
 
   if (request.method === 'OPTIONS') {
@@ -90,11 +90,12 @@ var requestHandler = function(request, response) {
       var formData = qs.parse(requestBody);
       response.writeHead(201, headers);
       console.log(requestBody);
-      messages.results.push(requestBody);
+      messages.results.push(JSON.parse(requestBody));
       response.end(JSON.stringify(messages));
-    })
+    });
     console.log('entered the send branch');
   }
+
 
 
   // Make sure to always call response.end() - Node may not send
