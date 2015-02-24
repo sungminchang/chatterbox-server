@@ -12,8 +12,9 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 var url = require('url');
+var qs = require('querystring');
 
-var messages = [];
+var messages = {results:[]};
 var data = '';
 
 var requestHandler = function(request, response) {
@@ -70,21 +71,29 @@ var requestHandler = function(request, response) {
   if (path === '/classes/messages/fetch') {
     var data = testData;
     response.writeHead(200, headers);
+    response.end(data);
   }
 
   if (request.method === 'OPTIONS') {
-    headers['Allow'] = 'GET, POST, PUT, DELETE, OPTIONS';
+    headers['Allow'] = 'GET, POST, PUT, HEAD, DELETE, OPTIONS';
     response.writeHead(200, headers);
-    //console.log(response._header);
+    response.end();
+    // console.log(response._header);
   }
   // request.method === "POST"
   if (request.method ==='POST') {
-    var data = testData; //{username: 'ben', text: 'random message'};
+    var requestBody = ''; //{username: 'ben', text: 'random message'};
+    request.on('data', function(data) {
+      requestBody += data;
+    });
+    request.on('end', function() {
+      var formData = qs.parse(requestBody);
+      response.writeHead(201, headers);
+      console.log(requestBody);
+      messages.results.push(requestBody);
+      response.end(JSON.stringify(messages));
+    })
     console.log('entered the send branch');
-    console.log(url.parse(request.url));
-
-    debugger;
-    response.writeHead(201, headers);
   }
 
 
@@ -95,7 +104,6 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client
-  response.end(data);
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).

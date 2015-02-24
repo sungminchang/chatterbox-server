@@ -13,6 +13,15 @@ $(function() {
 
     init: function() {
       // Get username
+      if (!/(&|\?)username=/.test(window.location.search)) {
+        var newSearch = window.location.search;
+        if (newSearch !== '' & newSearch !== '?') {
+          newSearch += '&';
+        }
+        newSearch += 'username=' + (prompt('What is your name?') || 'anonymous');
+        window.location.search = newSearch;
+      }
+
       app.username = window.location.search.substr(10);
 
       // Cache jQuery selectors
@@ -43,10 +52,11 @@ $(function() {
       $.ajax({
         url: app.server + '/send',
         type: 'POST',
-        data: {message: 'random message'}, //JSON.stringify(data),
+        data: JSON.stringify(data),
         contentType: 'application/json',
         success: function (data) {
           console.log('chatterbox: Message sent');
+          console.log(data);
           // Trigger a fetch to update the messages, pass true to animate
           app.fetch();
         },
