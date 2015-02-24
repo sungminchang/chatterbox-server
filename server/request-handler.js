@@ -11,7 +11,10 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var url = require('url');
 
+var messages = [];
+var data = '';
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -29,9 +32,11 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log("Serving request type " + request.method + " for url " + request.url);
-
+  var path = url.parse(request.url).pathname;
+  //console.log(url.parse(request.url));
   // The outgoing status.
-  var statusCode = 200;
+  var statusCode = 201;
+  var resourceCompletedCode = 201;
 
   // See the note below about CORS headers.
 
@@ -43,15 +48,7 @@ var requestHandler = function(request, response) {
   // other than plain text, like JSON or HTML.
   headers['Content-Type'] = "application/json";
 
-  console.log(request.path);
-  if (request.path === '/send') {
-    // response.end(index.html);
-  }
-  // .writeHead() writes to the request line and headers of the response,
-  // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
-
-  var data = JSON.stringify({
+  var testData = JSON.stringify({
     results: [{
       username: "Ben",
       text: "is pairing with sungmin",
@@ -68,13 +65,36 @@ var requestHandler = function(request, response) {
     }]
   });
 
+  // .writeHead() writes to the request line and headers of the response,
+  // which includes the status and all headers.
+  if (path === '/classes/messages/fetch') {
+    var data = testData;
+    response.writeHead(200, headers);
+  }
+
+  if (request.method === 'OPTIONS') {
+    headers['Allow'] = 'GET, POST, PUT, DELETE, OPTIONS';
+    response.writeHead(200, headers);
+    //console.log(response._header);
+  }
+  // request.method === "POST"
+  if (request.method ==='POST') {
+    var data = testData; //{username: 'ben', text: 'random message'};
+    console.log('entered the send branch');
+    console.log(url.parse(request.url));
+
+    debugger;
+    response.writeHead(201, headers);
+  }
+
+
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
   // response.end() will be the body of the response - i.e. what shows
   // up in the browser.
   //
   // Calling .end "flushes" the response's internal buffer, forcing
-  // node to actually send all the data over to the client.
+  // node to actually send all the data over to the client
   response.end(data);
 };
 
