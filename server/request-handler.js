@@ -17,6 +17,40 @@ var qs = require('querystring');
 var messages = {results:[]};
 var data = '';
 
+var defaultCorsHeaders = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "access-control-allow-headers": "content-type, accept",
+  "access-control-max-age": 10 // Seconds.
+};
+var headers = defaultCorsHeaders;
+headers['Content-Type'] = "application/json";
+
+var sendResponse = function(response, data, statusCode) {
+  response.writeHead(statusCode, headers);
+  response.end(JSON.stringify(data));
+};
+
+var actions = {
+  'GET': function() {
+    sendResponse(response, messages, 200);
+  },
+  'POST': function() {
+    sendResponse(response, messages, 201);
+  },
+  'OPTIONS': function() {
+    sendResponse(response, null, 200);
+  }
+};
+
+// var action = actions[request.method];
+// if ( action ) {
+//   action(request, response);
+// } else {
+//   utils.sendResponse(response, 'Not Found', 404);
+// }
+
+
 exports.requestHandler = function(request, response) {
   // Request and Response come from node's http module.
   //
@@ -34,114 +68,40 @@ exports.requestHandler = function(request, response) {
   // console.logs in your code.
   console.log("Serving request type " + request.method + " for url " + request.url);
   var path = url.parse(request.url).pathname;
-  //console.log(url.parse(request.url));
   // The outgoing status.
   var statusCode = 201;
   var resourceCompletedCode = 201;
 
-  // See the note below about CORS headers.
-
-  var headers = defaultCorsHeaders;
-
-  // Tell the client we are sending them plain text.
-  //
-  // You will need to change this if you are sending something
-  // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = "application/json";
-
-  var testData = JSON.stringify({
-    results: [{
-      username: "Ben",
-      text: "is pairing with sungmin",
-      createdAt: "2015-02-23",
-      roomname: "lobby",
-      objectId: "1"
-    },
-    {
-      username: "SungMin",
-      text: "is getting sick from his water",
-      createdAt: "2015-02-23",
-      roomname: "lobby",
-      objectId: "2"
-    }]
-  });
 
   console.log(url.parse(request.url));
 
+  // actions[request.method]
+
+
   if (request.method === 'OPTIONS') {
     headers['Allow'] = 'GET, POST, PUT, HEAD, DELETE, OPTIONS';
-    response.writeHead(200, headers);
-    response.end();
+    sendResponse(response, null, 200);
   }
 
   if (path === '/classes/messages' || path === '/classes/room1'){
     if (request.method === 'GET') {
-      response.writeHead(200, headers);
-      response.end(JSON.stringify(messages));
+      sendResponse(response, messages, 200);
     } else if (request.method === 'POST') {
-      var requestBody = ''; //{username: 'ben', text: 'random message'};
+      var requestBody = '';
       request.on('data', function(data) {
         requestBody += data;
       });
 
       request.on('end', function() {
         var formData = qs.parse(requestBody);
-        response.writeHead(201, headers);
-        console.log(requestBody);
         messages.results.push(JSON.parse(requestBody));
-        response.end(JSON.stringify(messages));
+        sendResponse(response, messages, 201);
       });
     }
-    //GET or POST
-  // } else if (path === '/classes/room1') {
-  //   //GET or POST
-  //   if (request.method === 'GET') {
-  //     response.writeHead(200, headers);
-  //     response.end(JSON.stringify(messages));
-  //   } else if (request.method === 'POST') {
-  //     var requestBody = '';
-  //     request.on('data', function(data))
-  //   }
-
-    // console.log(response._header);
   } else {
     response.writeHead(404, headers);
     response.end();
-    //RETURN 404
   }
-
-
-  // .writeHead() writes to the request line and headers of the response,
-  // // which includes the status and all headers.
-  // if (request.method === 'OPTIONS') {
-  //   headers['Allow'] = 'GET, POST, PUT, HEAD, DELETE, OPTIONS';
-  //   response.writeHead(200, headers);
-  //   response.end();
-  // }
-
-  // if (request.method === 'GET') {
-  //   var data = testData;
-  //   response.writeHead(200, headers);
-  //   response.end(JSON.stringify(messages));
-  // } else if (request.method ==='POST') {
-  //   var requestBody = ''; //{username: 'ben', text: 'random message'};
-  //   request.on('data', function(data) {
-  //     requestBody += data;
-  //   });
-  //   request.on('end', function() {
-  //     var formData = qs.parse(requestBody);
-  //     response.writeHead(201, headers);
-  //     console.log(requestBody);
-  //     messages.results.push(JSON.parse(requestBody));
-  //     response.end(JSON.stringify(messages));
-  //   });
-  //   console.log('entered the send branch');
-  // } else {
-
-  // }
-
-    // console.log(response._header);
-  // request.method === "POST"
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
@@ -161,9 +121,3 @@ exports.requestHandler = function(request, response) {
 //
 // Another way to get around this restriction is to serve you chat
 // client from this domain by setting up static file serving.
-var defaultCorsHeaders = {
-  "access-control-allow-origin": "*",
-  "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "access-control-allow-headers": "content-type, accept",
-  "access-control-max-age": 10 // Seconds.
-};
