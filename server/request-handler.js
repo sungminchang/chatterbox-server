@@ -13,7 +13,7 @@ this file and include it in basic-server.js so that it actually works.
 **************************************************************/
 var url = require('url');
 var qs = require('querystring');
-
+var fs = require('fs');
 var messages = {results:[]};
 var data = '';
 
@@ -23,6 +23,7 @@ var defaultCorsHeaders = {
   "access-control-allow-headers": "content-type, accept",
   "access-control-max-age": 10 // Seconds.
 };
+
 var headers = defaultCorsHeaders;
 headers['Content-Type'] = "application/json";
 
@@ -31,24 +32,33 @@ var sendResponse = function(response, data, statusCode) {
   response.end(JSON.stringify(data));
 };
 
+var collectData = function(response, request) {
+  var requestBody = '';
+  request.on('data', function(data) {
+    requestBody += data;
+  });
+
+  request.on('end', function() {
+    var formData = qs.parse(requestBody);
+    messages.results.push(JSON.parse(requestBody));
+    sendResponse(response, messages, 201);
+  });
+};
+
+var routes = {'/': true, '/classes/messages': true, '/classes/room1': true};
+
 var actions = {
-  'GET': function() {
+  'GET': function(response, request) {
     sendResponse(response, messages, 200);
   },
-  'POST': function() {
-    sendResponse(response, messages, 201);
+  'POST': function(response, request) {
+    collectData(response, request);
   },
-  'OPTIONS': function() {
+  'OPTIONS': function(response, request) {
+    headers['Allow'] = 'GET, POST, PUT, HEAD, DELETE, OPTIONS';
     sendResponse(response, null, 200);
   }
 };
-
-// var action = actions[request.method];
-// if ( action ) {
-//   action(request, response);
-// } else {
-//   utils.sendResponse(response, 'Not Found', 404);
-// }
 
 
 exports.requestHandler = function(request, response) {
@@ -67,41 +77,66 @@ exports.requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log("Serving request type " + request.method + " for url " + request.url);
+
+
   var path = url.parse(request.url).pathname;
   // The outgoing status.
   var statusCode = 201;
   var resourceCompletedCode = 201;
 
+  var route = routes[path];
+  if (route) {
+    fs.readFile('../client/index.html', function(error, content) {
+      console.log('entered file reading');
+      if (error) {
+          //console.log('error triggered!');
+          response.writeHead(500);
+          response.end();
+      }
+      else {
+        response.writeHead(200, {'Content-Type': 'text/html'});
+        response.end(content, 'utf-8');
+      }
+    });
+    var action = actions[request.method];
+    if ( action ) {
+      action(response, request);
+    } else {
+      sendResponse(response, 'Not Found', 404);
+    }
+  } else {
+     sendResponse(response, 'Not Found', 404);
+  }
 
   console.log(url.parse(request.url));
 
   // actions[request.method]
 
 
-  if (request.method === 'OPTIONS') {
-    headers['Allow'] = 'GET, POST, PUT, HEAD, DELETE, OPTIONS';
-    sendResponse(response, null, 200);
-  }
+  // if (request.method === 'OPTIONS') {
+  //   headers['Allow'] = 'GET, POST, PUT, HEAD, DELETE, OPTIONS';
+  //   sendResponse(response, null, 200);
+  // }
 
-  if (path === '/classes/messages' || path === '/classes/room1'){
-    if (request.method === 'GET') {
-      sendResponse(response, messages, 200);
-    } else if (request.method === 'POST') {
-      var requestBody = '';
-      request.on('data', function(data) {
-        requestBody += data;
-      });
+  // if (path === '/classes/messages' || path === '/classes/room1'){
+  //   if (request.method === 'GET') {
+  //     sendResponse(response, messages, 200);
+  //   } else if (request.method === 'POST') {
+  //     var requestBody = '';
+  //     request.on('data', function(data) {
+  //       requestBody += data;
+  //     });
 
-      request.on('end', function() {
-        var formData = qs.parse(requestBody);
-        messages.results.push(JSON.parse(requestBody));
-        sendResponse(response, messages, 201);
-      });
-    }
-  } else {
-    response.writeHead(404, headers);
-    response.end();
-  }
+  //     request.on('end', function() {
+  //       var formData = qs.parse(requestBody);
+  //       messages.results.push(JSON.parse(requestBody));
+  //       sendResponse(response, messages, 201);
+  //     });
+  //   }
+  // } else {
+  //   response.writeHead(404, headers);
+  //   response.end();
+  // }
 
   // Make sure to always call response.end() - Node may not send
   // anything back to the client until you do. The string you pass to
